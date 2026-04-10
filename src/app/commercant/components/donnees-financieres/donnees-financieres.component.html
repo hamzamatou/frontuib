@@ -1,0 +1,93 @@
+<div class="card" [class.completed]="status === 'completed'">
+  <div class="card-head">
+    <div class="head-left" style="display: flex; align-items: center; gap: 12px;">
+      <div class="snum" [class.done]="status === 'completed'">
+        {{ status === 'completed' ? '✔' : '2' }}
+      </div>
+      <div class="title-block">
+        <h3>Données financières (US06)</h3>
+        <div class="ssub">
+          {{ status === 'completed' ? 'Complété' : (status === 'active' ? 'En cours' : 'En attente') }}
+        </div>
+      </div>
+    </div>
+
+    <div class="status-badge" *ngIf="status === 'completed'">
+      <span>✔</span> Complété
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="grid">
+      <div class="form-error span2" *ngIf="formError">{{ formError }}</div>
+
+      <div class="field">
+        <label>Ancienneté emploi (mois)</label>
+        <input type="number" min="0" [(ngModel)]="ancienneteEmploiMois" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="ancienneteError">{{ ancienneteError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Revenu mensuel net (TND)</label>
+        <input type="number" min="0" [(ngModel)]="revenu" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="revenuError">{{ revenuError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Autres revenus mensuels (TND)</label>
+        <input type="number" min="0" [(ngModel)]="autresRevenus" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="autresRevenusError">{{ autresRevenusError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Loyer mensuel (TND)</label>
+        <input type="number" min="0" [(ngModel)]="loyer" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="loyerError">{{ loyerError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Mensualités crédits (TND)</label>
+        <input type="number" min="0" [(ngModel)]="mensualitesCredits" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="mensualitesCreditsError">{{ mensualitesCreditsError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Autres charges fixes (TND)</label>
+        <input type="number" min="0" [(ngModel)]="autresChargesFixes" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="autresChargesFixesError">{{ autresChargesFixesError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Crédits en cours (TND)</label>
+        <input type="number" min="0" [(ngModel)]="credits" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="creditsError">{{ creditsError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Montant demandé (TND)</label>
+        <input type="number" min="0" [(ngModel)]="montant" [disabled]="status === 'completed'">
+        <div class="field-error" *ngIf="montantError">{{ montantError }}</div>
+      </div>
+
+      <div class="field">
+        <label>Durée (mois)</label>
+        <select [(ngModel)]="dureeMois" [disabled]="status === 'completed'">
+          <option [ngValue]="12">12 mois</option>
+          <option [ngValue]="24">24 mois</option>
+          <option [ngValue]="36">36 mois</option>
+        </select>
+      </div>
+
+      <div class="field span2">
+        <label>Objet / Type produit</label>
+        <input type="text" [(ngModel)]="objet" [disabled]="status === 'completed'">
+      </div>
+
+    </div>
+
+    <div class="actions" *ngIf="status === 'active'">
+      <button class="btn" (click)="prev()">← Retour</button>
+      <button class="btn btn-red" (click)="next()">Suivant →</button>
+    </div>
+  </div>
+</div>

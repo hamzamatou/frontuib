@@ -1,0 +1,146 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { StepperComponent } from '../../components/stepper/stepper.component';
+import { InfosClientComponent } from '../../components/infos-client/infos-client.component';
+import { DonneesFinancieresComponent } from '../../components/donnees-financieres/donnees-financieres.component';
+import { DocumentsComponent } from '../../components/documents/documents.component';
+import { ConsentementComponent } from '../../components/consentement/consentement.component';
+import {
+  CreationDemandeCompleteRequest,
+  DemandeService,
+  DocumentMultipart,
+} from '../../../services/demande.service';
+
+@Component({
+  selector: 'app-nouvelle-demande',
+  standalone: true,
+  imports: [
+    CommonModule,
+    StepperComponent,
+    InfosClientComponent,
+    DonneesFinancieresComponent,
+    DocumentsComponent,
+    ConsentementComponent,
+  ],
+  templateUrl: './nouvelle-demande.component.html',
+  styleUrls: ['./nouvelle-demande.component.css'],
+})
+export class NouvelleDemandeComponent {
+  currentStep = 1;
+  maxStep = 4;
+
+  infosClientData: any = {};
+  donneesFinancieresData: any = {};
+  donneesFinancieresPrefill: any = null;
+  documentsData: DocumentMultipart[] = [];
+  typeProduit = '';
+
+  isSubmitting = false;
+  submitSuccess = false;
+  submitErrorMessage = '';
+
+  constructor(private demandeService: DemandeService) {}
+
+  nextStep() {
+    if (this.currentStep < this.maxStep) this.currentStep++;
+  }
+
+  prevStep() {
+    if (this.currentStep > 1 && !this.isSubmitting) this.currentStep--;
+  }
+
+  setInfosClient(clientData: any) {
+    this.infosClientData = clientData;
+    // Préremplissage des champs financiers à partir du dernier dossier du client (si disponible)
+    this.donneesFinancieresPrefill = null;
+
+    this.demandeService.getDernierDossierFinancierParCin(clientData.cin).subscribe({
+      next: (dossier) => {
+        this.donneesFinancieresPrefill = {
+          ancienneteEmploiMois: dossier.ancienneteEmploiMois ?? 0,
+          revenu: dossier.revenuMensuelNet ?? 0,
+          autresRevenus: dossier.autresRevenusMensuels ?? 0,
+          loyer: dossier.loyerMensuel ?? 0,
+          mensualitesCredits: dossier.mensualitesCredits ?? 0,
+          autresChargesFixes: dossier.autresChargesFixes ?? 0,
+          credits: dossier.encoursCredits ?? 0,
+        };
+        this.nextStep();
+      },
+      error: () => {
+        // Si le dossier n'existe pas encore, on laisse le formulaire vide.
+        this.donneesFinancieresPrefill = null;
+        this.nextStep();
+      },
+    });
+  }
+
+  setDonneesFinancieres(data: any) {
+    this.donneesFinancieresData = {
+      ancienneteEmploiMois: data.ancienneteEmploiMois,
+      revenuMensuelNet: data.revenu,
+      autresRevenusMensuels: data.autresRevenus || 0,
+      encoursCredits: data.credits,
+      loyerMensuel: data.loyer || 0,
+      mensualitesCredits: data.mensualitesCredits || 0,
+      autresChargesFixes: data.autresChargesFixes || 0,
+      montant: data.montant,
+      dureeMois: data.dureeMois,
+      typeProduit: data.objet,
+    };
+
+    this.nextStep();
+  }
+
+  setDocuments(documents: DocumentMultipart[], typeProduit: string) {
+    this.documentsData = documents;
+    this.typeProduit = typeProduit;
+    this.donneesFinancieresData.typeProduit = typeProduit;
+
+    this.currentStep = 4;
+    this.submitDemande();
+  }
+
+  submitDemande(): void {
+    if (this.isSubmitting) return;
+
+    const request: CreationDemandeCompleteRequest = {
+      ...this.infosClientData,
+      ...this.donneesFinancieresData,
+      documents: this.documentsData,
+    };
+
+    this.isSubmitting = true;
+    this.submitSuccess = false;
+    this.submitErrorMessage = '';
+
+    this.demandeService.creerDemande(request).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.submitSuccess = true;
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.submitSuccess = false;
+        this.submitErrorMessage =
+          err?.error?.error || err?.error?.message || err?.message || 'Erreur inconnue';
+      },
+    });
+  }
+
+  restartFlow() {
+    this.resetForm();
+  }
+
+  private resetForm() {
+    this.currentStep = 1;
+    this.infosClientData = {};
+    this.donneesFinancieresData = {};
+    this.donneesFinancieresPrefill = null;
+    this.documentsData = [];
+    this.typeProduit = '';
+    this.isSubmitting = false;
+    this.submitSuccess = false;
+    this.submitErrorMessage = '';
+  }
+}
